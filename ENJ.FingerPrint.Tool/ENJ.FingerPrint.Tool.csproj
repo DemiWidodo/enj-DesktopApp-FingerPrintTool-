@@ -95,6 +95,20 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ENJ.FingerPrint.Entity\ENJ.FingerPrint.Entity.csproj">
+      <Project>{c49b308f-d8af-4ed2-a64f-854fcdf21ff7}</Project>
+      <Name>ENJ.FingerPrint.Entity</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ENJ.FingerPrint.Repository\ENJ.FingerPrint.Repository.csproj">
+      <Project>{a88090e5-2d80-4bc7-8bc2-801858c2d07d}</Project>
+      <Name>ENJ.FingerPrint.Repository</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ENJ.FingerPrint.SystemMessage\ENJ.FingerPrint.SystemMessage.csproj">
+      <Project>{aa684005-e453-4215-b221-14de97d772f2}</Project>
+      <Name>ENJ.FingerPrint.SystemMessage</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
