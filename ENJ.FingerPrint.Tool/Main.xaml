@@ -4,9 +4,69 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ENJ.FingerPrint.Tool"
-        mc:Ignorable="d"
-        Title="Main" Height="350" Width="525">
-    <Grid>
-        
+        xmlns:tool="clr-namespace:ENJ.FingerPrint.SystemMessage;assembly=ENJ.FingerPrint.SystemMessage"
+        xmlns:commands="clr-namespace:ENJ.FingerPrint.Tool.Commands"
+        mc:Ignorable="d" Height="153" Width="297" Title="ENJ Finger Print Tool v1.0" WindowStartupLocation="CenterScreen" WindowState="Minimized" ResizeMode="NoResize">
+    <Grid Margin="0,0,2,4">
+
+        <tool:TaskbarIcon x:Name="FingerNotifyIcon"
+                        IconSource="/Icons/Error.ico"
+                        ToolTipText="ENJ Finger Print Tool - Running ...">
+
+            <!-- Set a simple context menu  -->
+            <!-- the data context of the context menu is the NotifyIcon itself (see more about this in DataBinding samples) -->
+            <tool:TaskbarIcon.ContextMenu>
+                <ContextMenu>
+                    <TextBlock Text="ENJ Finger Print Tool v1.0" />
+                    <MenuItem Header="_Show Main Window [S]"
+                              Command="{commands:ShowSampleWindowCommand}"
+                              CommandParameter="{Binding}">
+                        <MenuItem.Icon>
+                            <Image Width="16"
+                                   Height="16"
+                                   Source="/Images/Add.png" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+
+                    <Separator />
+
+                    <MenuItem Header="_Hide Main Window [H]"
+                              Command="{commands:HideSampleWindowCommand}"
+                              CommandParameter="{Binding}">
+                        <MenuItem.Icon>
+                            <Image Width="16"
+                                   Height="16"
+                                   Source="/Images/Remove.png" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                </ContextMenu>
+            </tool:TaskbarIcon.ContextMenu>
+
+        </tool:TaskbarIcon>
+        <TextBlock
+        	HorizontalAlignment="Left"
+        	Margin="21,8,0,0"
+        	VerticalAlignment="Top"
+        	FontSize="14"
+        	FontStyle="Italic"
+        	FontWeight="Bold"
+        	TextWrapping="Wrap" Text="ENJ Finger Print Tool v1.0"/>
+        <TextBlock
+        	HorizontalAlignment="Left"
+        	Margin="21,32,0,0"
+        	VerticalAlignment="Top"
+        	FontWeight="Bold"
+        	TextWrapping="Wrap"><Run
+        		Text="Purpose:" /></TextBlock>
+        <TextBlock
+        	HorizontalAlignment="Left"
+        	Margin="21,53,0,0"
+        	VerticalAlignment="Top"
+        	TextWrapping="Wrap"
+        	Width="249"
+        	Height="48"
+		><Run
+        		Text="This application will automatically did transfer / inject data Finger Print Time Attendance into VM Server." /></TextBlock>
+
     </Grid>
 </Window>
