@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ENJ.FingerPrint.Repository.Interfaces;
 using ENJ.FingerPrint.Core.Repository;
+using ENJ.FingerPrint.Entity.ViewObject;
 
 namespace ENJ.FingerPrint.Repository.Implements
 {
@@ -15,6 +16,11 @@ namespace ENJ.FingerPrint.Repository.Implements
         public bool CheckLocalConnection()
         {
             return localCheckInOutViewRepository.CheckLocalConnection();
+        }
+
+        public void UpdateLocalDataFingerPrint(LocalCheckInOutViewObject model)
+        {
+            localCheckInOutViewRepository.UpdateLocalDataFingerPrint(model);
         }
     }
 }

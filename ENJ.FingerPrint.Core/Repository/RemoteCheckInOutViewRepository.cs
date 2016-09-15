@@ -13,7 +13,9 @@ namespace ENJ.FingerPrint.Core.Repository
     {
         private SqlConnection dbConn = new SqlConnection("Data Source=115.85.80.83; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
         private SqlConnection remoteDBConn = new SqlConnection("Data Source=115.85.80.83; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
-        private SqlConnection localDBConn = new SqlConnection("Data Source=LOCALHOST; Initial Catalog=att2000; User Id=sa; Password=P@ssw0rd;");
+        private SqlConnection localDBConn = new SqlConnection("Data Source=ENJ-FS1\\SQLEXPRESS; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
+
+        private LocalCheckInOutViewRepository localCheckInOutViewRepository = new LocalCheckInOutViewRepository();
 
         public bool CheckRemoteConnection()
         {
@@ -40,6 +42,7 @@ namespace ENJ.FingerPrint.Core.Repository
             IFormatProvider timeCheckFormat = new TimeCheckFormat();
 
             RemoteCheckInOutViewObject remoteCheckInOut = new RemoteCheckInOutViewObject();
+            LocalCheckInOutViewObject localCheckInOut = new LocalCheckInOutViewObject();
 
             bool result = false;
             DateTime dateCheckTime = new DateTime();
@@ -91,6 +94,7 @@ namespace ENJ.FingerPrint.Core.Repository
                     dateCheckTime = Convert.ToDateTime(checkTime);
 
                     remoteCheckInOut = new RemoteCheckInOutViewObject();
+                    localCheckInOut = new LocalCheckInOutViewObject();
 
                     remoteCheckInOut.CheckTime = dateCheckTime;
                     remoteCheckInOut.UserId = Convert.ToInt32(userId);
@@ -107,6 +111,21 @@ namespace ENJ.FingerPrint.Core.Repository
                     remoteCheckInOut.ServerIdentity = "TMKSERVER";
 
                     InjectToRemoteTable(remoteCheckInOut);
+
+                    localCheckInOut.CheckTime = dateCheckTime;
+                    localCheckInOut.UserId = Convert.ToInt32(userId);
+                    localCheckInOut.CheckType = "I";
+                    localCheckInOut.SensorId = "1";
+                    localCheckInOut.VerifyCode = 1;
+                    localCheckInOut.MemoInfo = "INJECT";
+                    localCheckInOut.WorkCode = 0;
+                    localCheckInOut.UserExtFmt = 0;
+                    localCheckInOut.Sn = null;
+                    localCheckInOut.StaffNo = strStaffNo.ToString();
+                    localCheckInOut.TrDate = DateTime.Parse(dateCheckTime.ToString()).ToString("yyyy-MM-dd");
+                    localCheckInOut.TrTime = DateTime.Parse(dateCheckTime.ToString()).ToString("HH:mm:ss");
+
+                    localCheckInOutViewRepository.UpdateLocalDataFingerPrint(localCheckInOut);
 
                     result = true;
 
