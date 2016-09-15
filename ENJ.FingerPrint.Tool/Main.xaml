@@ -67,6 +67,14 @@
         	Height="48"
 		><Run
         		Text="This application will automatically did transfer / inject data Finger Print Time Attendance into VM Server." /></TextBlock>
+        <Path
+        	Fill="#FFFFFFFF"
+        	Stretch="Fill"
+        	Stroke="#FF60758A"
+        	HorizontalAlignment="Left"
+        	Margin="250,20,0,10"
+        	Width="1"
+        	Data="M269,57 L269,390.18163" Opacity="0.325" RenderTransformOrigin="-0.711,0.462" />
 
     </Grid>
 </Window>

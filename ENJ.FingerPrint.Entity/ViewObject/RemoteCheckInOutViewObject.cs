@@ -20,5 +20,6 @@ namespace ENJ.FingerPrint.Entity.ViewObject
         public string StaffNo { get; set; }
         public string TrDate { get; set; }
         public string TrTime { get; set; }
+        public string ServerIdentity { get; set; }
     }
 }

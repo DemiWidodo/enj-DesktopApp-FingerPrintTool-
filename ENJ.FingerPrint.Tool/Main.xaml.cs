@@ -20,6 +20,8 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using ENJ.FingerPrint.Entity.ViewObject;
 using ENJ.FingerPrint.Repository.CustomFunctions;
+using ENJ.FingerPrint.Repository.Implements;
+using ENJ.FingerPrint.Repository.Interfaces;
 
 namespace ENJ.FingerPrint.Tool
 {
@@ -28,9 +30,146 @@ namespace ENJ.FingerPrint.Tool
     /// </summary>
     public partial class Main : Window
     {
+        private IRemoteCheckInOutRepository remoteCheckInOutRepository = new RemoteCheckInOutRepository();
+        private ILocalCheckInOutRepository localCheckInOutRepository = new LocalCheckInOutRepository();
+        private bool remoteConn = false;
+        private bool localConn = false;
+        private FancyBalloon balloon = new FancyBalloon();
+
         public Main()
         {
             InitializeComponent();
+            CheckingConnection();
+        }
+
+
+        private async void ApplicationStart()
+        {
+            await Task.Delay(10000);
+            balloon = new FancyBalloon();
+            balloon.BalloonText = "Started...";
+            FingerNotifyIcon.ShowCustomBalloon(balloon, PopupAnimation.Slide, 10000);
+            await Task.Delay(5000);
+            StartInjectFingerPrintData();
+        }
+
+
+        private async void StartInjectFingerPrintData()
+        {
+            bool localConn = CheckLocalConnection();
+            bool remoteConn = CheckRemoteConnection();
+            await Task.Delay(5000);
+            if (localConn && remoteConn)
+            {
+                InsertDataToRemoteServer();
+            } else if (!localConn)
+            {
+                await Task.Delay(5000);
+                balloon = new FancyBalloon();
+                balloon.BalloonText = "Local Failed...";
+                FingerNotifyIcon.ShowCustomBalloon(balloon, PopupAnimation.Slide, 10000);
+                await Task.Delay(10000);
+                ApplicationStart();
+            } else if (!remoteConn)
+            {
+                await Task.Delay(5000);
+                balloon = new FancyBalloon();
+                balloon.BalloonText = "Remote Failed...";
+                FingerNotifyIcon.ShowCustomBalloon(balloon, PopupAnimation.Slide, 10000);
+                await Task.Delay(10000);
+                ApplicationStart();
+            }
+        }
+
+
+        private async void InsertDataToRemoteServer()
+        {
+
+            bool localConn = CheckLocalConnection();
+            bool remoteConn = CheckRemoteConnection();
+            await Task.Delay(5000);
+            bool injectResult = remoteCheckInOutRepository.ProceedInjectFingerPrintData();
+
+            if (localConn && remoteConn)
+            {
+                if (injectResult)
+                {
+                    await Task.Delay(5000);
+                    balloon = new FancyBalloon();
+                    balloon.BalloonText = "Inject Completed...";
+                    FingerNotifyIcon.ShowCustomBalloon(balloon, PopupAnimation.Slide, 10000);
+                    await Task.Delay(5000);
+                    StartInjectFingerPrintData();
+                }  else if (!injectResult)
+                {
+                    await Task.Delay(5000);
+                    StartInjectFingerPrintData();
+                }                
+            }  
+        }
+
+        private bool CheckRemoteConnection()
+        {            
+            bool dataConn = remoteCheckInOutRepository.CheckRemoteConnection();
+            return dataConn;
+        }
+
+        private bool CheckLocalConnection()
+        {
+            bool dataConn = localCheckInOutRepository.CheckLocalConnection();
+            return dataConn;
+        }
+
+
+        private async void CheckingConnection()
+        {
+            await Task.Delay(10000);
+
+            try
+            {
+                balloon = new FancyBalloon();
+                balloon.BalloonText = "Connecting...";
+                FingerNotifyIcon.ShowCustomBalloon(balloon, PopupAnimation.Slide, 10000);
+                remoteConn = remoteCheckInOutRepository.CheckRemoteConnection();
+                localConn = localCheckInOutRepository.CheckLocalConnection();
+
+                if (remoteConn && localConn)
+                {
+                    await Task.Delay(10000);
+                    balloon = new FancyBalloon();
+                    balloon.BalloonText = "Connected";
+                    FingerNotifyIcon.ShowCustomBalloon(balloon, PopupAnimation.Slide, 10000);
+                    await Task.Delay(5000);
+                    ApplicationStart();
+                } else if (!remoteConn && !localConn)
+                {
+                    await Task.Delay(10000);
+                    balloon = new FancyBalloon();
+                    balloon.BalloonText = "Not Connected";
+                    FingerNotifyIcon.ShowCustomBalloon(balloon, PopupAnimation.Slide, 10000);
+                } else if (!localConn)
+                {
+                    await Task.Delay(10000);
+                    balloon = new FancyBalloon();
+                    balloon.BalloonText = "Not Connected";
+                    FingerNotifyIcon.ShowCustomBalloon(balloon, PopupAnimation.Slide, 10000);
+                    this.CheckingConnection();
+                } else if (!remoteConn)
+                {
+                    await Task.Delay(10000);
+                    balloon = new FancyBalloon();
+                    balloon.BalloonText = "Not Connected";
+                    FingerNotifyIcon.ShowCustomBalloon(balloon, PopupAnimation.Slide, 10000);
+                    this.CheckingConnection();
+                }
+
+            }
+            catch (Exception)
+            {
+                
+                throw;
+            }
+
         }
     }
 }

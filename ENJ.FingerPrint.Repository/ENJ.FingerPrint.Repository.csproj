@@ -41,6 +41,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CustomFunctions\LeftRightMid.cs" />
+    <Compile Include="Implements\LocalCheckInOutRepository.cs" />
+    <Compile Include="Implements\RemoteCheckInOutRepository.cs" />
+    <Compile Include="Interfaces\ILocalCheckInOutRepository.cs" />
+    <Compile Include="Interfaces\IRemoteCheckInOutRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -53,10 +57,7 @@
       <Name>ENJ.FingerPrint.Entity</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Implements\" />
-    <Folder Include="Interfaces\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
