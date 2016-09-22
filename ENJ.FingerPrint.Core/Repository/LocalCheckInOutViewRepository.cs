@@ -11,7 +11,7 @@ namespace ENJ.FingerPrint.Core.Repository
     public class LocalCheckInOutViewRepository : IDisposable
     {
         // Local Server Name : ENJ-FS1\SQLEXPRESS
-        private SqlConnection dbConn = new SqlConnection("Data Source=ENJ-FS1\\SQLEXPRESS; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
+        private SqlConnection dbConn = new SqlConnection("Data Source=ENJ-FS3\\SQLEXPRESS; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
 
         public bool CheckLocalConnection()
         {

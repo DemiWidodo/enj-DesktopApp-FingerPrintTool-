@@ -13,7 +13,7 @@ namespace ENJ.FingerPrint.Core.Repository
     {
         private SqlConnection dbConn = new SqlConnection("Data Source=115.85.80.83; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
         private SqlConnection remoteDBConn = new SqlConnection("Data Source=115.85.80.83; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
-        private SqlConnection localDBConn = new SqlConnection("Data Source=ENJ-FS1\\SQLEXPRESS; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
+        private SqlConnection localDBConn = new SqlConnection("Data Source=ENJ-FS3\\SQLEXPRESS; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
 
         private LocalCheckInOutViewRepository localCheckInOutViewRepository = new LocalCheckInOutViewRepository();
 
@@ -108,7 +108,7 @@ namespace ENJ.FingerPrint.Core.Repository
                     remoteCheckInOut.StaffNo = strStaffNo.ToString();
                     remoteCheckInOut.TrDate = DateTime.Parse(dateCheckTime.ToString()).ToString("yyyy-MM-dd");
                     remoteCheckInOut.TrTime = DateTime.Parse(dateCheckTime.ToString()).ToString("HH:mm:ss");
-                    remoteCheckInOut.ServerIdentity = "M72";
+                    remoteCheckInOut.ServerIdentity = "TIMIKA";
 
                     InjectToRemoteTable(remoteCheckInOut);
 
