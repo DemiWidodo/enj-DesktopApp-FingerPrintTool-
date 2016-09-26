@@ -41,6 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ViewObject\DataTemplateViewObject.cs" />
     <Compile Include="ViewObject\FingerPrintEmployeeMapperViewObject.cs" />
     <Compile Include="ViewObject\LocalCheckInOutViewObject.cs" />
     <Compile Include="ViewObject\RemoteCheckInOutViewObject.cs" />

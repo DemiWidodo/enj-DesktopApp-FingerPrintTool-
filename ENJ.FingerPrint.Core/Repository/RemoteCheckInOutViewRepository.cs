@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Odbc;
+using System.Data.OleDb;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
@@ -13,7 +15,9 @@ namespace ENJ.FingerPrint.Core.Repository
     {
         private SqlConnection dbConn = new SqlConnection("Data Source=115.85.80.83; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
         private SqlConnection remoteDBConn = new SqlConnection("Data Source=115.85.80.83; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
-        private SqlConnection localDBConn = new SqlConnection("Data Source=ENJ-FS3\\SQLEXPRESS; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
+        private SqlConnection localDBConn = new SqlConnection("Data Source=DEVELOPER-PC; Initial Catalog=att2000; User Id=sa; Password=P@ssw0rd;");
+        OleDbConnection remoteMDBConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;");
+        OdbcConnection remoteDSN = new OdbcConnection("DSN=FPCENTRAl");
 
         private LocalCheckInOutViewRepository localCheckInOutViewRepository = new LocalCheckInOutViewRepository();
 
@@ -25,6 +29,10 @@ namespace ENJ.FingerPrint.Core.Repository
             {
                 dbConn.Open();
                 dbConn.Close();
+                remoteMDBConn.Open();
+                remoteMDBConn.Close();
+                remoteDSN.Open();
+                remoteDSN.Close();
                 checkConnection = true;
             }
             catch (Exception)
@@ -37,7 +45,31 @@ namespace ENJ.FingerPrint.Core.Repository
 
         public bool ProceedInjectFingerPrintData()
         {
+            bool result = false;            
 
+            try
+            {
+                bool injectTimesheet = InjectDataTimesheetFP();
+                if (injectTimesheet)
+                {
+                    result = true;
+                } else if (!injectTimesheet)
+                {
+                    result = false;
+                }
+            }
+            catch (Exception)
+            {
+                result = false;
+            }
+
+
+            return result;
+        }
+
+
+        private bool InjectDataTimesheetFP()
+        {
             IFormatProvider dateCheckFormat = new DateCheckFormat();//format date from the checklog machine
             IFormatProvider timeCheckFormat = new TimeCheckFormat();
 
@@ -52,13 +84,13 @@ namespace ENJ.FingerPrint.Core.Repository
             cmd.CommandText = " 	DECLARE  " +
                    "   @CheckCurrentYear integer, " +
                    "   @CheckCurrentMonth integer, " +
-	               "   @CheckCurrentDay integer, " +
+                   "   @CheckCurrentDay integer, " +
                    "   @CheckCurrentHour integer, " +
-	               "   @CheckCurrentMinute integer, " +
+                   "   @CheckCurrentMinute integer, " +
                    "   @CheckCurrentSecond integer, " +
-	               "   @STARTOFFICEHOUR DATETIME2, " +
+                   "   @STARTOFFICEHOUR DATETIME2, " +
                    "   @STARTCOMPAREDATE DATETIME2 , " +
-	               "   @SYSCURRDATETIME DATETIME2 = GETDATE(); " +
+                   "   @SYSCURRDATETIME DATETIME2 = GETDATE(); " +
                    "         SET @CheckCurrentYear = DATEPART(YEAR, GETDATE()); " +
                    "         SET @CheckCurrentMonth = DATEPART(MONTH, GETDATE()); " +
                    "         SET @CheckCurrentDay = DATEPART(DAY, GETDATE()); " +
@@ -69,8 +101,8 @@ namespace ENJ.FingerPrint.Core.Repository
                    "         SET @STARTCOMPAREDATE = DATEADD(MINUTE, -5, GETDATE()); " +
                    "         SELECT " +
                    "     T1.USERID ,T1.CHECKTIME ,T1.CHECKTYPE, " +
-		           "     T1.VERIFYCODE ,T1.SENSORID ,T1.Memoinfo, " +
-		           "     T1.WorkCode ,T1.sn ,T1.UserExtFmt ,T2.Badgenumber AS StaffNo , T2.Name " +
+                   "     T1.VERIFYCODE ,T1.SENSORID ,T1.Memoinfo, " +
+                   "     T1.WorkCode ,T1.sn ,T1.UserExtFmt ,T2.Badgenumber AS StaffNo , T2.Name " +
                    "     FROM CHECKINOUT T1 " +
                    "     INNER JOIN USERINFO T2 ON T1.USERID = T2.USERID " +
                    "     WHERE (T1.Memoinfo IS NULL OR T1.Memoinfo <> 'INJECT') AND T1.CHECKTIME BETWEEN @STARTCOMPAREDATE AND @SYSCURRDATETIME; ";
@@ -82,7 +114,8 @@ namespace ENJ.FingerPrint.Core.Repository
             if (rdr.IsClosed)
             {
                 result = false;
-            } else if (!rdr.IsClosed)
+            }
+            else if (!rdr.IsClosed)
             {
 
                 int index = 0;
@@ -138,7 +171,7 @@ namespace ENJ.FingerPrint.Core.Repository
             return result;
         }
 
-        public void InjectToRemoteTable(RemoteCheckInOutViewObject model)
+        private void InjectToRemoteTable(RemoteCheckInOutViewObject model)
         {
             SqlCommand cmd = new SqlCommand();
             cmd.CommandType = System.Data.CommandType.Text;

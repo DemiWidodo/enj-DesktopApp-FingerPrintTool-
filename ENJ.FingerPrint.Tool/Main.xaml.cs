@@ -129,7 +129,7 @@ namespace ENJ.FingerPrint.Tool
             {
                 balloon = new FancyBalloon();
                 balloon.BalloonText = "Connecting...";
-                FingerNotifyIcon.ShowCustomBalloon(balloon, PopupAnimation.Slide, 10000);
+                FingerNotifyIcon.ShowCustomBalloon(balloon, PopupAnimation.Slide, 20000);
                 remoteConn = remoteCheckInOutRepository.CheckRemoteConnection();
                 localConn = localCheckInOutRepository.CheckLocalConnection();
 
@@ -147,6 +147,7 @@ namespace ENJ.FingerPrint.Tool
                     balloon = new FancyBalloon();
                     balloon.BalloonText = "Not Connected";
                     FingerNotifyIcon.ShowCustomBalloon(balloon, PopupAnimation.Slide, 10000);
+                    this.CheckingConnection();
                 } else if (!localConn)
                 {
                     await Task.Delay(10000);
