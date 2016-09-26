@@ -22,5 +22,10 @@ namespace ENJ.FingerPrint.Repository.Implements
         {
             localCheckInOutViewRepository.UpdateLocalDataFingerPrint(model);
         }
+
+        public bool CompareMDBLocalToFPCENTRAL()
+        {
+           return localCheckInOutViewRepository.CompareMDBLocalToFPCENTRAL();
+        }
     }
 }

@@ -11,5 +11,6 @@ namespace ENJ.FingerPrint.Repository.Interfaces
     {
         bool CheckLocalConnection();
         void UpdateLocalDataFingerPrint(LocalCheckInOutViewObject model);
+        bool CompareMDBLocalToFPCENTRAL();
     }
 }
