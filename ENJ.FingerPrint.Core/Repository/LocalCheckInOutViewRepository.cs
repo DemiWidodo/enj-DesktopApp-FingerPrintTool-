@@ -285,7 +285,7 @@ namespace ENJ.FingerPrint.Core.Repository
                     //CHECKING COUNT MDB LOCAL SERVER MACHINE
                     dataAdapter = new OleDbDataAdapter(
                         " SELECT * FROM CHECKINOUT " +
-                        " WHERE CHECKTIME BETWEEN #" + strCurrentDate + " 00:00:00# AND #" + strCurrentDate + " 11:59:00# " +
+                        " WHERE CHECKTIME BETWEEN #09/14/2016 00:00:00# AND #09/14/2016 23:59:00# " +
                         " AND  (Memoinfo IS NULL OR Memoinfo <> 'INJECTED')", localCon);
                     ds = new DataSet();  //TEMPLATE -> table name in att2000.mdb
                     dataAdapter.Fill(ds, "CHECKINOUT");
