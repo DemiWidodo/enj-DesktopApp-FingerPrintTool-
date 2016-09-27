@@ -266,6 +266,10 @@ namespace ENJ.FingerPrint.Core.Repository
         public bool InjectCheckInOutToSQL()
         {
             bool result = false;
+            DateTime dt = new DateTime();
+            dt = DateTime.Now;
+
+            string strCurrentDate = DateTime.Parse(dt.ToString()).ToString("MM/dd/yyyy");
 
             try
             {
@@ -279,18 +283,26 @@ namespace ENJ.FingerPrint.Core.Repository
                     localCon.Open();
 
                     //CHECKING COUNT MDB LOCAL SERVER MACHINE
-                    dataAdapter = new OleDbDataAdapter("SELECT * FROM CHECKINOUT", localCon);
+                    dataAdapter = new OleDbDataAdapter(
+                        " SELECT * FROM CHECKINOUT " +
+                        " WHERE CHECKTIME BETWEEN #" + strCurrentDate + " 00:00:00# AND #" + strCurrentDate + " 11:59:00# " +
+                        " AND  (Memoinfo IS NULL OR Memoinfo <> 'INJECTED')", localCon);
                     ds = new DataSet();  //TEMPLATE -> table name in att2000.mdb
                     dataAdapter.Fill(ds, "CHECKINOUT");
                     int templateLocalCount = ds.Tables[0].Rows.Count;
                     localCount = templateLocalCount;
                     //END CHECKING COUNT MDB LOCAL SERVER MACHINE
 
+                    if (localCount > 0)
+                    {
+                        
+                    }
+
                     result = true;
 
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 result = false;
             }

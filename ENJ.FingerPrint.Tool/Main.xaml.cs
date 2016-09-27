@@ -60,7 +60,9 @@ namespace ENJ.FingerPrint.Tool
             bool remoteConn = CheckRemoteConnection();
             await Task.Delay(5000);
             if (localConn && remoteConn)
-            {
+            {                
+                GetChekInOutToSQL();
+                await Task.Delay(5000);
                 InsertDataToRemoteServer();
             } else if (!localConn)
             {
@@ -80,7 +82,6 @@ namespace ENJ.FingerPrint.Tool
                 ApplicationStart();
             }
         }
-
 
         private async void InsertDataToRemoteServer()
         {
@@ -180,6 +181,12 @@ namespace ENJ.FingerPrint.Tool
                     }
                 }
             }
+        }
+
+        private async void GetChekInOutToSQL()
+        {
+            bool checkintosql = localCheckInOutRepository.InjectCheckInOutToSQL();
+
         }
 
         private bool CheckRemoteConnection()
