@@ -263,6 +263,16 @@ namespace ENJ.FingerPrint.Core.Repository
 
         }
 
+        public bool InjectCheckInOutToSQL()
+        {
+            bool result = false;
+
+
+
+
+            return result;
+        }
+
 
         public void Dispose()
         {
