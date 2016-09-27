@@ -19,7 +19,7 @@ namespace ENJ.FingerPrint.Core.Repository
         OleDbConnection remoteMDBConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;");
         OdbcConnection remoteDSN = new OdbcConnection("DSN=FPCENTRAl");
 
-        private string toLocalDSN = "DSN=ATT2000";
+        private string toLocalDSN = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\FSDB\\att2000.mdb;";
         private string toRemoteDSN = "DSN=FPCENTRAL";
         private int localCount = 0;
         private int remoteCount = 0;
@@ -36,8 +36,6 @@ namespace ENJ.FingerPrint.Core.Repository
                 dbConn.Close();
                 remoteMDBConn.Open();
                 remoteMDBConn.Close();
-                remoteDSN.Open();
-                remoteDSN.Close();
                 checkConnection = true;
             }
             catch (Exception)
@@ -195,24 +193,24 @@ namespace ENJ.FingerPrint.Core.Repository
         public bool CompareFPCENTRALToMDLocal()
         {
             bool compare = false;
-            OdbcCommand cmd;
-            OdbcDataAdapter adapter;
-            OdbcDataAdapter fpCentralAdapter;
+            OleDbCommand cmd;
+            OleDbDataAdapter adapter;
+            OleDbDataAdapter fpCentralAdapter;
             DataSet ds;
             DataSet dsFpCentral;
 
             try
             {
-                using (OdbcConnection remoteCon = new OdbcConnection())
+                using (OleDbConnection remoteCon = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;"))
                 {
-                    remoteCon.ConnectionString = toRemoteDSN;
+                    //remoteCon.ConnectionString = toRemoteDSN;
                     remoteCon.Open();
 
                     int templateLocalCount = 0;
 
 
                     //CHECKING COUNT MDB LOCAL SERVER MACHINE
-                    adapter = new OdbcDataAdapter("SELECT * FROM TEMPLATE", remoteCon);
+                    adapter = new OleDbDataAdapter("SELECT * FROM TEMPLATE", remoteCon);
                     ds = new DataSet();  //TEMPLATE -> table name in att2000.mdb
                     adapter.Fill(ds, "TEMPLATE");
                     int templateRemoteCount = ds.Tables[0].Rows.Count;
@@ -220,13 +218,13 @@ namespace ENJ.FingerPrint.Core.Repository
                     //END CHECKING COUNT MDB LOCAL SERVER MACHINE
 
 
-                    using (OdbcConnection localConn = new OdbcConnection())
+                    using (OleDbConnection localConn = new OleDbConnection())
                     {
                         localConn.ConnectionString = toLocalDSN;
                         localConn.Open();
 
                         //CHECKING COUNT MDB REMOTE SERVER MACHINE
-                        fpCentralAdapter = new OdbcDataAdapter("SELECT * FROM TEMPLATE", localConn);
+                        fpCentralAdapter = new OleDbDataAdapter("SELECT * FROM TEMPLATE", localConn);
                         dsFpCentral = new DataSet();  //TEMPLATE -> table name in att2000.mdb
                         fpCentralAdapter.Fill(dsFpCentral, "TEMPLATE");
                         templateLocalCount = dsFpCentral.Tables[0].Rows.Count;
@@ -330,9 +328,9 @@ namespace ENJ.FingerPrint.Core.Repository
         {
             bool result = false;
 
-            OdbcCommand cmd;
-            OdbcDataAdapter adapter;
-            OdbcDataAdapter fpCentralAdapter;
+            OleDbCommand cmd;
+            OleDbDataAdapter adapter;
+            OleDbDataAdapter fpCentralAdapter;
             DataSet ds;
             DataSet dsFpCentral;
 
@@ -344,13 +342,13 @@ namespace ENJ.FingerPrint.Core.Repository
 
                     foreach (var itemModel in model.OrderBy(o => o.TemplateId))
                     {
-                        using (OdbcConnection insRemoteConn = new OdbcConnection())
+                        using (OleDbConnection insRemoteConn = new OleDbConnection())
                         {
 
-                            OdbcConnection localConn = new OdbcConnection();
+                            OleDbConnection localConn = new OleDbConnection();
                             localConn.ConnectionString = toLocalDSN;
                             localConn.Open();
-                            fpCentralAdapter = new OdbcDataAdapter("SELECT TEMPLATEID, USERID, FINGERID, TEMPLATE, USETYPE, Flag, DivisionFP, TEMPLATE4 FROM TEMPLATE WHERE USERID = " + itemModel.UserId + " AND FINGERID = " + itemModel.FingerId, localConn);
+                            fpCentralAdapter = new OleDbDataAdapter("SELECT TEMPLATEID, USERID, FINGERID, TEMPLATE, USETYPE, Flag, DivisionFP, TEMPLATE4 FROM TEMPLATE WHERE USERID = " + itemModel.UserId + " AND FINGERID = " + itemModel.FingerId, localConn);
                             dsFpCentral = new DataSet();
                             fpCentralAdapter.Fill(dsFpCentral, "TEMPLATE");
 

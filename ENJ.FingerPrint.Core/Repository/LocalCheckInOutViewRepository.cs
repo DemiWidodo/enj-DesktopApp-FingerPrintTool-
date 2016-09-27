@@ -14,11 +14,11 @@ namespace ENJ.FingerPrint.Core.Repository
     public class LocalCheckInOutViewRepository : IDisposable
     {
         // Local Server Name : ENJ-FP2\\SQLEXPRESS
-        private SqlConnection dbConn = new SqlConnection("Data Source=ENJ-FP2\\SQLEXPRESS; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
+        private SqlConnection dbConn = new SqlConnection("Data Source=DEVELOPER-PC; Initial Catalog=att2000; User Id=sa; Password=P@ssw0rd;");
         private OleDbConnection localMDBConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\FSDB\\att2000.mdb;");
         private OdbcConnection localDSN = new OdbcConnection("DSN=ATT2000");
-        private string toLocalDSN = "DSN=ATT2000";
-        private string toRemoteDSN = "DSN=FPCENTRAL";
+        private string toLocalDSN = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\FSDB\\att2000.mdb;";
+        private string toRemoteDSN = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;";
         private int localCount = 0;
         private int remoteCount = 0;
 
@@ -32,8 +32,6 @@ namespace ENJ.FingerPrint.Core.Repository
                 dbConn.Close();
                 localMDBConn.Open();
                 localMDBConn.Close();
-                localDSN.Open();
-                localDSN.Close();
                 checkConnection = true;
             }
             catch (Exception)
@@ -60,15 +58,15 @@ namespace ENJ.FingerPrint.Core.Repository
         public bool CompareMDBLocalToFPCENTRAL()
         {
             bool compare = false;
-            OdbcCommand cmd;
-            OdbcDataAdapter adapter;
-            OdbcDataAdapter fpCentralAdapter;
+            OleDbCommand cmd;
+            OleDbDataAdapter adapter;
+            OleDbDataAdapter fpCentralAdapter;
             DataSet ds;
             DataSet dsFpCentral;
 
             try
             {
-                using (OdbcConnection localCon = new OdbcConnection())
+                using (OleDbConnection localCon = new OleDbConnection())
                 {
                     localCon.ConnectionString = toLocalDSN;
                     localCon.Open();
@@ -77,7 +75,7 @@ namespace ENJ.FingerPrint.Core.Repository
 
 
                     //CHECKING COUNT MDB LOCAL SERVER MACHINE
-                    adapter = new OdbcDataAdapter("SELECT * FROM TEMPLATE", localCon);
+                    adapter = new OleDbDataAdapter("SELECT * FROM TEMPLATE", localCon);
                     ds = new DataSet();  //TEMPLATE -> table name in att2000.mdb
                     adapter.Fill(ds, "TEMPLATE");
                     int templateLocalCount = ds.Tables[0].Rows.Count;
@@ -85,13 +83,13 @@ namespace ENJ.FingerPrint.Core.Repository
                     //END CHECKING COUNT MDB LOCAL SERVER MACHINE
 
 
-                    using (OdbcConnection remoteConn = new OdbcConnection())
+                    using (OleDbConnection remoteConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;"))
                     {
-                        remoteConn.ConnectionString = toRemoteDSN;
+                        //remoteConn.ConnectionString = toRemoteDSN;
                         remoteConn.Open();
 
                         //CHECKING COUNT MDB REMOTE SERVER MACHINE
-                        fpCentralAdapter = new OdbcDataAdapter("SELECT * FROM TEMPLATE", remoteConn);
+                        fpCentralAdapter = new OleDbDataAdapter("SELECT * FROM TEMPLATE", remoteConn);
                         dsFpCentral = new DataSet();  //TEMPLATE -> table name in att2000.mdb
                         fpCentralAdapter.Fill(dsFpCentral, "TEMPLATE");
                         templateRemoteCount = dsFpCentral.Tables[0].Rows.Count;
@@ -195,9 +193,9 @@ namespace ENJ.FingerPrint.Core.Repository
         {
             bool result = false;
 
-            OdbcCommand cmd;
-            OdbcDataAdapter adapter;
-            OdbcDataAdapter fpCentralAdapter;
+            OleDbCommand cmd;
+            OleDbDataAdapter adapter;
+            OleDbDataAdapter fpCentralAdapter;
             DataSet ds;
             DataSet dsFpCentral;
 
@@ -209,13 +207,13 @@ namespace ENJ.FingerPrint.Core.Repository
 
                     foreach (var itemModel in model.OrderBy(o => o.TemplateId))
                     {
-                        using (OdbcConnection insLocalConn = new OdbcConnection())
+                        using (OleDbConnection insLocalConn = new OleDbConnection())
                         {
 
-                            OdbcConnection remoteConn = new OdbcConnection();
-                            remoteConn.ConnectionString = toRemoteDSN;
+                            OleDbConnection remoteConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;");
+                            //remoteConn.ConnectionString = toRemoteDSN;
                             remoteConn.Open();
-                            fpCentralAdapter = new OdbcDataAdapter("SELECT TEMPLATEID, USERID, FINGERID, TEMPLATE, USETYPE, Flag, DivisionFP, TEMPLATE4 FROM TEMPLATE WHERE USERID = " + itemModel.UserId + " AND FINGERID = " + itemModel.FingerId, remoteConn);
+                            fpCentralAdapter = new OleDbDataAdapter("SELECT TEMPLATEID, USERID, FINGERID, TEMPLATE, USETYPE, Flag, DivisionFP, TEMPLATE4 FROM TEMPLATE WHERE USERID = " + itemModel.UserId + " AND FINGERID = " + itemModel.FingerId, remoteConn);
                             dsFpCentral = new DataSet();
                             fpCentralAdapter.Fill(dsFpCentral, "TEMPLATE");
 
