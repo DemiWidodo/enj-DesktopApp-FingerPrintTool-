@@ -141,7 +141,7 @@ namespace ENJ.FingerPrint.Core.Repository
                     remoteCheckInOut.StaffNo = strStaffNo.ToString();
                     remoteCheckInOut.TrDate = DateTime.Parse(dateCheckTime.ToString()).ToString("yyyy-MM-dd");
                     remoteCheckInOut.TrTime = DateTime.Parse(dateCheckTime.ToString()).ToString("HH:mm:ss");
-                    remoteCheckInOut.ServerIdentity = "TIMIKA";
+                    remoteCheckInOut.ServerIdentity = "M72";
 
                     InjectToRemoteTable(remoteCheckInOut);
 
