@@ -15,9 +15,14 @@ namespace ENJ.FingerPrint.Core.Repository
     {
         private SqlConnection dbConn = new SqlConnection("Data Source=115.85.80.83; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
         private SqlConnection remoteDBConn = new SqlConnection("Data Source=115.85.80.83; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
-        private SqlConnection localDBConn = new SqlConnection("Data Source=DEVELOPER-PC; Initial Catalog=att2000; User Id=sa; Password=P@ssw0rd;");
+        private SqlConnection localDBConn = new SqlConnection("Data Source=ENJ-FP2\\SQLEXPRESS; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
         OleDbConnection remoteMDBConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;");
         OdbcConnection remoteDSN = new OdbcConnection("DSN=FPCENTRAl");
+
+        private string toLocalDSN = "DSN=ATT2000";
+        private string toRemoteDSN = "DSN=FPCENTRAL";
+        private int localCount = 0;
+        private int remoteCount = 0;
 
         private LocalCheckInOutViewRepository localCheckInOutViewRepository = new LocalCheckInOutViewRepository();
 
@@ -141,7 +146,7 @@ namespace ENJ.FingerPrint.Core.Repository
                     remoteCheckInOut.StaffNo = strStaffNo.ToString();
                     remoteCheckInOut.TrDate = DateTime.Parse(dateCheckTime.ToString()).ToString("yyyy-MM-dd");
                     remoteCheckInOut.TrTime = DateTime.Parse(dateCheckTime.ToString()).ToString("HH:mm:ss");
-                    remoteCheckInOut.ServerIdentity = "M72";
+                    remoteCheckInOut.ServerIdentity = "M66";
 
                     InjectToRemoteTable(remoteCheckInOut);
 
@@ -185,6 +190,215 @@ namespace ENJ.FingerPrint.Core.Repository
             remoteDBConn.Open();
             cmd.ExecuteNonQuery();
             remoteDBConn.Close();
+        }
+
+        public bool CompareFPCENTRALToMDLocal()
+        {
+            bool compare = false;
+            OdbcCommand cmd;
+            OdbcDataAdapter adapter;
+            OdbcDataAdapter fpCentralAdapter;
+            DataSet ds;
+            DataSet dsFpCentral;
+
+            try
+            {
+                using (OdbcConnection remoteCon = new OdbcConnection())
+                {
+                    remoteCon.ConnectionString = toRemoteDSN;
+                    remoteCon.Open();
+
+                    int templateLocalCount = 0;
+
+
+                    //CHECKING COUNT MDB LOCAL SERVER MACHINE
+                    adapter = new OdbcDataAdapter("SELECT * FROM TEMPLATE", remoteCon);
+                    ds = new DataSet();  //TEMPLATE -> table name in att2000.mdb
+                    adapter.Fill(ds, "TEMPLATE");
+                    int templateRemoteCount = ds.Tables[0].Rows.Count;
+                    remoteCount = templateRemoteCount;
+                    //END CHECKING COUNT MDB LOCAL SERVER MACHINE
+
+
+                    using (OdbcConnection localConn = new OdbcConnection())
+                    {
+                        localConn.ConnectionString = toLocalDSN;
+                        localConn.Open();
+
+                        //CHECKING COUNT MDB REMOTE SERVER MACHINE
+                        fpCentralAdapter = new OdbcDataAdapter("SELECT * FROM TEMPLATE", localConn);
+                        dsFpCentral = new DataSet();  //TEMPLATE -> table name in att2000.mdb
+                        fpCentralAdapter.Fill(dsFpCentral, "TEMPLATE");
+                        templateLocalCount = dsFpCentral.Tables[0].Rows.Count;
+                        localCount = templateLocalCount;
+                        //END CHECKING COUNT MDB REMOTE SERVER MACHINE                      
+                    }
+
+
+                    if (templateRemoteCount > 0 && templateLocalCount > 0)
+                    {
+                        //LOAD DATA TO MODEL//
+
+                        List<RemoteTemplateViewObject> listRemoteTemplateViewObjects = new List<RemoteTemplateViewObject>();
+                        RemoteTemplateViewObject remoteTemplateViewObject = new RemoteTemplateViewObject();
+
+                        for (int i = 0; i < templateRemoteCount; i++)
+                        {
+                            remoteTemplateViewObject = new RemoteTemplateViewObject();
+                            remoteTemplateViewObject.TemplateId = ds.Tables[0].Rows[i].ItemArray[0].ToString();
+                            remoteTemplateViewObject.UserId = ds.Tables[0].Rows[i].ItemArray[1].ToString();
+                            remoteTemplateViewObject.FingerId = ds.Tables[0].Rows[i].ItemArray[2].ToString();
+
+                            listRemoteTemplateViewObjects.Add(remoteTemplateViewObject);
+                        }
+
+                        List<LocalTemplateViewObject> listLocalTemplateViewObjects =
+                            new List<LocalTemplateViewObject>();
+                        LocalTemplateViewObject localTemplateViewObject = new LocalTemplateViewObject();
+
+                        for (int i = 0; i < templateLocalCount; i++)
+                        {
+                            localTemplateViewObject = new LocalTemplateViewObject();
+                            localTemplateViewObject.TemplateId = dsFpCentral.Tables[0].Rows[i].ItemArray[0].ToString();
+                            localTemplateViewObject.UserId = dsFpCentral.Tables[0].Rows[i].ItemArray[1].ToString();
+                            localTemplateViewObject.FingerId = dsFpCentral.Tables[0].Rows[i].ItemArray[2].ToString();
+
+                            listLocalTemplateViewObjects.Add(localTemplateViewObject);
+                        }
+
+                        //END LOAD DATA TO MODEL//
+
+                        List<NewDataTemplateViewObject> listNewDataTemplateViewObjects = new List<NewDataTemplateViewObject>();
+                        NewDataTemplateViewObject newDataTemplateViewObjects = new NewDataTemplateViewObject();
+
+                        foreach (var itemLocalTemplate in listLocalTemplateViewObjects.OrderBy(o => o.TemplateId))
+                        {
+                            var tempNewDataTemplate =
+                                listRemoteTemplateViewObjects.Where(w =>
+                                        w.TemplateId == itemLocalTemplate.TemplateId &&
+                                        w.UserId == itemLocalTemplate.UserId &&
+                                        w.FingerId == itemLocalTemplate.FingerId).ToList();
+                            if (tempNewDataTemplate == null || tempNewDataTemplate.Count == 0)
+                            {
+                                newDataTemplateViewObjects = new NewDataTemplateViewObject();
+                                newDataTemplateViewObjects.TemplateId = itemLocalTemplate.TemplateId;
+                                newDataTemplateViewObjects.UserId = itemLocalTemplate.UserId;
+                                newDataTemplateViewObjects.FingerId = itemLocalTemplate.FingerId;
+
+                                listNewDataTemplateViewObjects.Add(newDataTemplateViewObjects);
+                            }
+
+                        }
+
+                        //INJECT NEW TEMPLATE DATA INTO LOCAL TEMPLATE DATA
+
+                        if (listNewDataTemplateViewObjects.Count > 0 || listNewDataTemplateViewObjects != null)
+                        {
+                            try
+                            {
+                                bool injectDataMDB = InjectRemoteTemplateData(listNewDataTemplateViewObjects);
+
+                                if (injectDataMDB)
+                                {
+                                    compare = true;
+                                }
+
+                            }
+                            catch (Exception ex)
+                            {
+                                compare = false;
+                            }
+                        }
+
+                        //END INJECT NEW TEMPLATE DATA INTO LOCAL TEMPLATE DATA
+                    }
+                    else if (templateLocalCount == 0 || templateRemoteCount == 0)
+                    {
+                        compare = false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                compare = false;
+            }
+
+            return compare;
+        }
+
+        private bool InjectRemoteTemplateData(List<NewDataTemplateViewObject> model)
+        {
+            bool result = false;
+
+            OdbcCommand cmd;
+            OdbcDataAdapter adapter;
+            OdbcDataAdapter fpCentralAdapter;
+            DataSet ds;
+            DataSet dsFpCentral;
+
+            if (model.Count > 0 || model != null)
+            {
+
+                if (localCount > remoteCount) // INSERT NEW DATA INTO LOCAL MDB ATT2000 Database
+                {
+
+                    foreach (var itemModel in model.OrderBy(o => o.TemplateId))
+                    {
+                        using (OdbcConnection insRemoteConn = new OdbcConnection())
+                        {
+
+                            OdbcConnection localConn = new OdbcConnection();
+                            localConn.ConnectionString = toLocalDSN;
+                            localConn.Open();
+                            fpCentralAdapter = new OdbcDataAdapter("SELECT TEMPLATEID, USERID, FINGERID, TEMPLATE, USETYPE, Flag, DivisionFP, TEMPLATE4 FROM TEMPLATE WHERE USERID = " + itemModel.UserId + " AND FINGERID = " + itemModel.FingerId, localConn);
+                            dsFpCentral = new DataSet();
+                            fpCentralAdapter.Fill(dsFpCentral, "TEMPLATE");
+
+                            int localCheck = dsFpCentral.Tables[0].Rows.Count;
+
+                            if (localCheck > 0) // CHECKING DATA FOUND
+                            {
+                                try
+                                {
+
+                                    OleDbCommand cmdOleDb;
+                                    OleDbCommand cmdAtt2000;
+                                    OleDbDataAdapter da;
+                                    DataTable dt = new DataTable();
+
+                                    OleDbConnection conInsRemoteConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;");
+
+                                    conInsRemoteConn.Open();
+                                    cmdOleDb = new OleDbCommand("insert into TEMPLATE (USERID, FINGERID, TEMPLATE, USETYPE, Flag, DivisionFP, TEMPLATE4)" +
+                                                          " values (@USERID ,@FINGERID ,@TEMPLATE ,@USETYPE ,@Flag ,@DivisionFP ,@TEMPLATE4) ", conInsRemoteConn);
+                                    cmdOleDb.Parameters.AddWithValue("@USERID", dsFpCentral.Tables[0].Rows[0]["USERID"]);
+                                    cmdOleDb.Parameters.AddWithValue("@FINGERID", dsFpCentral.Tables[0].Rows[0]["FINGERID"]);
+                                    cmdOleDb.Parameters.AddWithValue("@TEMPLATE", dsFpCentral.Tables[0].Rows[0]["TEMPLATE"]);
+                                    cmdOleDb.Parameters.AddWithValue("@USETYPE", dsFpCentral.Tables[0].Rows[0]["USETYPE"]);
+                                    cmdOleDb.Parameters.AddWithValue("@Flag", dsFpCentral.Tables[0].Rows[0]["Flag"]);
+                                    cmdOleDb.Parameters.AddWithValue("@DivisionFP", dsFpCentral.Tables[0].Rows[0]["DivisionFP"]);
+                                    cmdOleDb.Parameters.AddWithValue("@TEMPLATE4", dsFpCentral.Tables[0].Rows[0]["TEMPLATE4"]);
+
+                                    cmdOleDb.ExecuteNonQuery();
+                                    conInsRemoteConn.Close();
+
+                                    result = true;
+                                }
+                                catch (Exception ex)
+                                {
+                                    result = false;
+                                }
+                            }
+                        }
+
+                    }
+
+                }
+
+            }
+
+            return result;
+
         }
 
         #region Function Collection Library

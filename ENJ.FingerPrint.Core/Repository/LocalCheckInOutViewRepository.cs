@@ -13,9 +13,9 @@ namespace ENJ.FingerPrint.Core.Repository
 {
     public class LocalCheckInOutViewRepository : IDisposable
     {
-        // Local Server Name : ENJ-FS1\SQLEXPRESS
-        private SqlConnection dbConn = new SqlConnection("Data Source=DEVELOPER-PC; Initial Catalog=att2000; User Id=sa; Password=P@ssw0rd;");
-        private OleDbConnection localMDBConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\EntryPassDB\\att2000.mdb;");
+        // Local Server Name : ENJ-FP2\\SQLEXPRESS
+        private SqlConnection dbConn = new SqlConnection("Data Source=ENJ-FP2\\SQLEXPRESS; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
+        private OleDbConnection localMDBConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\FSDB\\att2000.mdb;");
         private OdbcConnection localDSN = new OdbcConnection("DSN=ATT2000");
         private string toLocalDSN = "DSN=ATT2000";
         private string toRemoteDSN = "DSN=FPCENTRAL";
@@ -231,7 +231,7 @@ namespace ENJ.FingerPrint.Core.Repository
                                     OleDbDataAdapter da;
                                     DataTable dt = new DataTable();
 
-                                    OleDbConnection conInsLocalConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\EntryPassDB\\att2000.mdb;");
+                                    OleDbConnection conInsLocalConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\FSDB\\att2000.mdb;");
 
                                     conInsLocalConn.Open();
                                     cmdOleDb = new OleDbCommand("insert into TEMPLATE (USERID, FINGERID, TEMPLATE, USETYPE, Flag, DivisionFP, TEMPLATE4)" +
@@ -258,12 +258,7 @@ namespace ENJ.FingerPrint.Core.Repository
 
                     }
 
-                }
-                else if (localCount > remoteCount) // INSERT NEW DATA INTO REMOTE MDB ATT2000 Database
-                {
-
-                }
-
+                } 
             }
 
             return result;

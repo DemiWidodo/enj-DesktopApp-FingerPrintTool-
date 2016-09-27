@@ -112,7 +112,6 @@ namespace ENJ.FingerPrint.Tool
                 {
 
                     await Task.Delay(5000);
-
                     bool compareLocalMDB = localCheckInOutRepository.CompareMDBLocalToFPCENTRAL();
 
                     if (compareLocalMDB)
@@ -124,8 +123,21 @@ namespace ENJ.FingerPrint.Tool
                     }
                     else if (!compareLocalMDB)
                     {
+
                         await Task.Delay(5000);
-                        StartInjectFingerPrintData();
+                        bool compareRemoteMDB = remoteCheckInOutRepository.CompareFPCENTRALToMDLocal();
+
+                        if (compareRemoteMDB)
+                        {
+                            balloon = new FancyBalloon();
+                            balloon.BalloonText = "Inject Completed...";
+                            FingerNotifyIcon.ShowCustomBalloon(balloon, PopupAnimation.Slide, 15000);
+                            StartInjectFingerPrintData();
+                        } else if (!compareRemoteMDB)
+                        {
+                            await Task.Delay(5000);
+                            StartInjectFingerPrintData();
+                        }
                     }
                 }
             }
