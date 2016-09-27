@@ -27,5 +27,10 @@ namespace ENJ.FingerPrint.Repository.Implements
         {
            return localCheckInOutViewRepository.CompareMDBLocalToFPCENTRAL();
         }
+
+        public bool InjectCheckInOutToSQL()
+        {
+            return localCheckInOutViewRepository.InjectCheckInOutToSQL();
+        }
     }
 }

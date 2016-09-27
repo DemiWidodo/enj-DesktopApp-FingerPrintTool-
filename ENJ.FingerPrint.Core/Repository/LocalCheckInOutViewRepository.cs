@@ -267,8 +267,33 @@ namespace ENJ.FingerPrint.Core.Repository
         {
             bool result = false;
 
+            try
+            {
 
+                OleDbCommand cmd;
+                OleDbDataAdapter dataAdapter;
+                DataSet ds;
 
+                using (OleDbConnection localCon = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\FSDB\\att2000.mdb;"))
+                {                    
+                    localCon.Open();
+
+                    //CHECKING COUNT MDB LOCAL SERVER MACHINE
+                    dataAdapter = new OleDbDataAdapter("SELECT * FROM CHECKINOUT", localCon);
+                    ds = new DataSet();  //TEMPLATE -> table name in att2000.mdb
+                    dataAdapter.Fill(ds, "CHECKINOUT");
+                    int templateLocalCount = ds.Tables[0].Rows.Count;
+                    localCount = templateLocalCount;
+                    //END CHECKING COUNT MDB LOCAL SERVER MACHINE
+
+                    result = true;
+
+                }
+            }
+            catch (Exception)
+            {
+                result = false;
+            }
 
             return result;
         }
