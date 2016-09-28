@@ -186,7 +186,6 @@ namespace ENJ.FingerPrint.Tool
         private async void GetChekInOutToSQL()
         {
             bool checkintosql = localCheckInOutRepository.InjectCheckInOutToSQL();
-
         }
 
         private bool CheckRemoteConnection()
