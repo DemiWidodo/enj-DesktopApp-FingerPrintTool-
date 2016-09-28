@@ -13,8 +13,8 @@ namespace ENJ.FingerPrint.Core.Repository
 {
     public class LocalCheckInOutViewRepository : IDisposable
     {
-        // Local Server Name : ENJ-FP2\\SQLEXPRESS
-        private SqlConnection dbConn = new SqlConnection("Data Source=ENJ-FP2\\SQLEXPRESS; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
+        // Local Server Name : ENJ-FP2
+        private SqlConnection dbConn = new SqlConnection("Data Source=ENJ-FS2\\SQLEXPRESS; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
         private OleDbConnection localMDBConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\FSDB\\att2000.mdb;");
         private OdbcConnection localDSN = new OdbcConnection("DSN=ATT2000");
         private string toLocalDSN = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\FSDB\\att2000.mdb;";
@@ -291,7 +291,7 @@ namespace ENJ.FingerPrint.Core.Repository
                         " ,T1.CHECKTYPE ,T1.VERIFYCODE ,T1.SENSORID " +
                         " ,T1.Memoinfo ,T1.WorkCode ,T1.sn ,T1.UserExtFmt" +
                         "  FROM CHECKINOUT T1 INNER JOIN USERINFO T2 ON T1.USERID = T2.USERID" +
-                        " WHERE CHECKTIME BETWEEN #09/14/2016 00:00:00# AND #09/14/2016 23:59:00# " +
+                        " WHERE CHECKTIME BETWEEN #" + strCurrentDate + " 00:00:00# AND #" + strCurrentDate + " 23:59:00# " +
                         " AND  (Memoinfo IS NULL OR Memoinfo <> 'INJECTED')", localCon);
                     ds = new DataSet();  //TEMPLATE -> table name in att2000.mdb
                     dataAdapter.Fill(ds, "CHECKINOUT");
