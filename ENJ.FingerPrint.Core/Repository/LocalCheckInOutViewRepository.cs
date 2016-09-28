@@ -14,7 +14,7 @@ namespace ENJ.FingerPrint.Core.Repository
     public class LocalCheckInOutViewRepository : IDisposable
     {
         // Local Server Name : ENJ-FP2\\SQLEXPRESS
-        private SqlConnection dbConn = new SqlConnection("Data Source=DEVELOPER-PC; Initial Catalog=att2000; User Id=sa; Password=P@ssw0rd;");
+        private SqlConnection dbConn = new SqlConnection("Data Source=ENJ-FP2\\SQLEXPRESS; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
         private OleDbConnection localMDBConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\FSDB\\att2000.mdb;");
         private OdbcConnection localDSN = new OdbcConnection("DSN=ATT2000");
         private string toLocalDSN = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\FSDB\\att2000.mdb;";
