@@ -278,13 +278,19 @@ namespace ENJ.FingerPrint.Core.Repository
                 OleDbDataAdapter dataAdapter;
                 DataSet ds;
 
+                List<LocalCheckInOutViewObject> listLocalCheckInOut = new List<LocalCheckInOutViewObject>();
+                LocalCheckInOutViewObject localCheckInOut = new LocalCheckInOutViewObject();
+
                 using (OleDbConnection localCon = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\FSDB\\att2000.mdb;"))
                 {                    
                     localCon.Open();
 
                     //CHECKING COUNT MDB LOCAL SERVER MACHINE
                     dataAdapter = new OleDbDataAdapter(
-                        " SELECT * FROM CHECKINOUT " +
+                        " SELECT T1.CHECKTIME ,T1.USERID" +
+                        " ,T1.CHECKTYPE ,T1.VERIFYCODE ,T1.SENSORID " +
+                        " ,T1.Memoinfo ,T1.WorkCode ,T1.sn ,T1.UserExtFmt" +
+                        "  FROM CHECKINOUT T1 INNER JOIN USERINFO T2 ON T1.USERID = T2.USERID" +
                         " WHERE CHECKTIME BETWEEN #09/14/2016 00:00:00# AND #09/14/2016 23:59:00# " +
                         " AND  (Memoinfo IS NULL OR Memoinfo <> 'INJECTED')", localCon);
                     ds = new DataSet();  //TEMPLATE -> table name in att2000.mdb
@@ -295,12 +301,94 @@ namespace ENJ.FingerPrint.Core.Repository
 
                     if (localCount > 0)
                     {
-                        
+                        listLocalCheckInOut = new List<LocalCheckInOutViewObject>();
+
+                        for (int i = 0; i < localCount; i++)
+                        {
+                            localCheckInOut = new LocalCheckInOutViewObject();
+                            localCheckInOut.CheckTime = Convert.ToDateTime(ds.Tables[0].Rows[i]["CHECKTIME"].ToString());
+                            localCheckInOut.UserId = Convert.ToInt32(ds.Tables[0].Rows[i]["USERID"]);
+                            localCheckInOut.CheckType = ds.Tables[0].Rows[i]["CHECKTYPE"].ToString();
+                            localCheckInOut.VerifyCode = Convert.ToInt32(ds.Tables[0].Rows[i]["VERIFYCODE"]);
+                            localCheckInOut.SensorId = ds.Tables[0].Rows[i]["SENSORID"].ToString();
+                            localCheckInOut.MemoInfo = ds.Tables[0].Rows[i]["Memoinfo"].ToString();
+                            localCheckInOut.WorkCode = Convert.ToInt32(ds.Tables[0].Rows[0]["WorkCode"]);
+                            localCheckInOut.Sn = ds.Tables[0].Rows[i]["sn"].ToString();
+                            localCheckInOut.UserExtFmt = Convert.ToByte(ds.Tables[0].Rows[i]["UserExtFmt"]);
+
+                            listLocalCheckInOut.Add(localCheckInOut);
+                        }
+
+                        if (listLocalCheckInOut.Count > 0 || listLocalCheckInOut != null)
+                        {
+
+                            LocalCheckInOutViewObject localSQLInsert = new LocalCheckInOutViewObject();
+
+                            foreach (var listItem in listLocalCheckInOut.OrderBy(o => o.UserId))
+                            {
+                                localSQLInsert = new LocalCheckInOutViewObject();
+                                localCheckInOut.CheckTime = listItem.CheckTime;
+                                localCheckInOut.UserId = listItem.UserId;
+                                localCheckInOut.CheckType = listItem.CheckType;
+                                localCheckInOut.VerifyCode = listItem.VerifyCode;
+                                localCheckInOut.SensorId = listItem.SensorId;
+                                localCheckInOut.MemoInfo = listItem.MemoInfo;
+                                localCheckInOut.WorkCode = listItem.WorkCode;
+                                localCheckInOut.Sn = listItem.Sn;
+                                localCheckInOut.UserExtFmt = listItem.UserExtFmt;
+
+                                bool pullInToSQL = InsertTimeAttendanceToSQL(localCheckInOut);
+
+                                if (pullInToSQL)
+                                {
+                                    OleDbCommand updateLocalMDB;
+                                    using (
+                                        OleDbConnection updateLocalMDBConn =
+                                            new OleDbConnection(
+                                                "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\FSDB\\att2000.mdb;"))
+                                    {
+                                        updateLocalMDBConn.Open();
+                                        updateLocalMDB = new OleDbCommand(" UPDATE CHECKINOUT SET Memoinfo = 'INJECTED' " +
+                                                                          " WHERE USERID = " + listItem.UserId + " AND CHECKTIME = #" + listItem.CheckTime + "# ", updateLocalMDBConn);
+
+                                        updateLocalMDB.ExecuteNonQuery();
+                                        updateLocalMDBConn.Close();
+                                    }
+
+                                }
+                            }
+
+                            result = true;
+                        }
                     }
-
-                    result = true;
-
                 }
+            }
+            catch (Exception ex)
+            {
+                result = false;
+            }
+
+            return result;
+        }
+
+        private bool InsertTimeAttendanceToSQL(LocalCheckInOutViewObject model)
+        {
+            bool result = false;
+
+            try
+            {
+                SqlCommand cmd = new SqlCommand();
+                cmd.CommandType = System.Data.CommandType.Text;
+                cmd.CommandText = " INSERT INTO [att2000].[dbo].[CHECKINOUT](  " +
+                                  " USERID,CHECKTIME,CHECKTYPE,VERIFYCODE,SENSORID,Memoinfo,WorkCode,sn,UserExtFmt) " +
+                                  "  VALUES( " + model.UserId + " ,'" + model.CheckTime + "','" + model.CheckType
+                                  + "', " + model.VerifyCode + " ,'" + model.SensorId + "',NULL,0,NULL,0 )";
+                cmd.Connection = dbConn;
+
+                dbConn.Open();
+                cmd.ExecuteNonQuery();
+                dbConn.Close();
+                result = true;
             }
             catch (Exception ex)
             {
