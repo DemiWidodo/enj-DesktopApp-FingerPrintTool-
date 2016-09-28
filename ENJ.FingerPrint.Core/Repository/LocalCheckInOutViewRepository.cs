@@ -18,7 +18,7 @@ namespace ENJ.FingerPrint.Core.Repository
         private OleDbConnection localMDBConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\FSDB\\att2000.mdb;");
         private OdbcConnection localDSN = new OdbcConnection("DSN=ATT2000");
         private string toLocalDSN = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\FSDB\\att2000.mdb;";
-        private string toRemoteDSN = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;";
+        private string toRemoteDSN = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\DEVELOPER-PC\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;";
         private int localCount = 0;
         private int remoteCount = 0;
 
@@ -83,7 +83,7 @@ namespace ENJ.FingerPrint.Core.Repository
                     //END CHECKING COUNT MDB LOCAL SERVER MACHINE
 
 
-                    using (OleDbConnection remoteConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;"))
+                    using (OleDbConnection remoteConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\DEVELOPER-PC\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;"))
                     {
                         //remoteConn.ConnectionString = toRemoteDSN;
                         remoteConn.Open();
@@ -210,7 +210,7 @@ namespace ENJ.FingerPrint.Core.Repository
                         using (OleDbConnection insLocalConn = new OleDbConnection())
                         {
 
-                            OleDbConnection remoteConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;");
+                            OleDbConnection remoteConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\DEVELOPER-PC\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;");
                             //remoteConn.ConnectionString = toRemoteDSN;
                             remoteConn.Open();
                             fpCentralAdapter = new OleDbDataAdapter("SELECT TEMPLATEID, USERID, FINGERID, TEMPLATE, USETYPE, Flag, DivisionFP, TEMPLATE4 FROM TEMPLATE WHERE USERID = " + itemModel.UserId + " AND FINGERID = " + itemModel.FingerId, remoteConn);

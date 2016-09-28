@@ -13,10 +13,10 @@ namespace ENJ.FingerPrint.Core.Repository
 {
     public class RemoteCheckInOutViewRepository : IDisposable
     {
-        private SqlConnection dbConn = new SqlConnection("Data Source=115.85.80.83; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
-        private SqlConnection remoteDBConn = new SqlConnection("Data Source=115.85.80.83; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
+        private SqlConnection dbConn = new SqlConnection("Data Source=DEVELOPER-PC; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
+        private SqlConnection remoteDBConn = new SqlConnection("Data Source=DEVELOPER-PC; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
         private SqlConnection localDBConn = new SqlConnection("Data Source=ENJ-FS2\\SQLEXPRESS; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
-        OleDbConnection remoteMDBConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;");
+        OleDbConnection remoteMDBConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\DEVELOPER-PC\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;");
         OdbcConnection remoteDSN = new OdbcConnection("DSN=FPCENTRAl");
 
         private string toLocalDSN = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\FSDB\\att2000.mdb;";
@@ -201,7 +201,7 @@ namespace ENJ.FingerPrint.Core.Repository
 
             try
             {
-                using (OleDbConnection remoteCon = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;"))
+                using (OleDbConnection remoteCon = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\DEVELOPER-PC\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;"))
                 {
                     //remoteCon.ConnectionString = toRemoteDSN;
                     remoteCon.Open();
@@ -364,7 +364,7 @@ namespace ENJ.FingerPrint.Core.Repository
                                     OleDbDataAdapter da;
                                     DataTable dt = new DataTable();
 
-                                    OleDbConnection conInsRemoteConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;");
+                                    OleDbConnection conInsRemoteConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\DEVELOPER-PC\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;");
 
                                     conInsRemoteConn.Open();
                                     cmdOleDb = new OleDbCommand("insert into TEMPLATE (USERID, FINGERID, TEMPLATE, USETYPE, Flag, DivisionFP, TEMPLATE4)" +
