@@ -28,5 +28,23 @@ namespace ENJ.FingerPrint.Entity.ViewObject
         public string UserId { get; set; }
         public string FingerId { get; set; }
     }
+
+    public class LocalUserInfoTempViewObject
+    {
+        public string UserId { get; set; }
+        public string badgeNumber { get; set; }
+    }
+
+    public class RemoteUserInfoTempViewObject
+    {
+        public string UserId { get; set; }
+        public string badgeNumber { get; set; }
+    }
+
+    public class NewUserInfoTempViewObject
+    {
+        public string UserId { get; set; }
+        public string badgeNumber { get; set; }
+    }
     
 }

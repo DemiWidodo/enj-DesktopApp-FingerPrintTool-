@@ -13,16 +13,18 @@ namespace ENJ.FingerPrint.Core.Repository
 {
     public class RemoteCheckInOutViewRepository : IDisposable
     {
-        private SqlConnection dbConn = new SqlConnection("Data Source=DEVELOPER-PC; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
-        private SqlConnection remoteDBConn = new SqlConnection("Data Source=DEVELOPER-PC; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
-        private SqlConnection localDBConn = new SqlConnection("Data Source=ENJ-FS2\\SQLEXPRESS; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
-        OleDbConnection remoteMDBConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\DEVELOPER-PC\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;");
+        private SqlConnection dbConn = new SqlConnection("Data Source=115.85.80.83; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
+        private SqlConnection remoteDBConn = new SqlConnection("Data Source=115.85.80.83; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
+        private SqlConnection localDBConn = new SqlConnection("Data Source=ENJ-FP4\\SQLEXPRESS; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
+        OleDbConnection remoteMDBConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;");
         OdbcConnection remoteDSN = new OdbcConnection("DSN=FPCENTRAl");
 
         private string toLocalDSN = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\FSDB\\att2000.mdb;";
         private string toRemoteDSN = "DSN=FPCENTRAL";
         private int localCount = 0;
+        private int localUserInfoCount = 0;
         private int remoteCount = 0;
+        private int remoteUserInfoCount = 0;
 
         private LocalCheckInOutViewRepository localCheckInOutViewRepository = new LocalCheckInOutViewRepository();
 
@@ -144,7 +146,7 @@ namespace ENJ.FingerPrint.Core.Repository
                     remoteCheckInOut.StaffNo = strStaffNo.ToString();
                     remoteCheckInOut.TrDate = DateTime.Parse(dateCheckTime.ToString()).ToString("yyyy-MM-dd");
                     remoteCheckInOut.TrTime = DateTime.Parse(dateCheckTime.ToString()).ToString("HH:mm:ss");
-                    remoteCheckInOut.ServerIdentity = "M66";
+                    remoteCheckInOut.ServerIdentity = "TMK";
 
                     InjectToRemoteTable(remoteCheckInOut);
 
@@ -190,6 +192,140 @@ namespace ENJ.FingerPrint.Core.Repository
             remoteDBConn.Close();
         }
 
+        public bool CompareFPCentralToUserInfoLocal()
+        {
+            bool compare = false;
+            OleDbCommand cmd;
+            OleDbDataAdapter adapter;
+            OleDbDataAdapter fpCentralAdapter;
+            DataSet ds;
+            DataSet dsFpCentral;
+
+            try
+            {
+                using (OleDbConnection remoteCon = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;"))
+                {
+                    //remoteCon.ConnectionString = toRemoteDSN;
+                    remoteCon.Open();
+
+                    int templateLocalCount = 0;
+
+
+                    //CHECKING COUNT MDB LOCAL SERVER MACHINE
+                    adapter = new OleDbDataAdapter(" SELECT USERID ,Badgenumber ,Name ,DEFAULTDEPTID ,ATT ,INLATE ,OUTEARLY ,OVERTIME ,SEP " +
+                       "  , HOLIDAY, LUNCHDURATION, privilege, InheritDeptSch, InheritDeptSchClass, AutoSchPlan " +
+                       "  , MinAutoSchInterval, RegisterOT, InheritDeptRule, EMPRIVILEGE FROM USERINFO ", remoteCon);
+                    ds = new DataSet();  //TEMPLATE -> table name in att2000.mdb
+                    adapter.Fill(ds, "USERINFO");
+                    int templateRemoteCount = ds.Tables[0].Rows.Count;
+                    remoteUserInfoCount = templateRemoteCount;
+                    //END CHECKING COUNT MDB LOCAL SERVER MACHINE
+
+
+                    using (OleDbConnection localConn = new OleDbConnection())
+                    {
+                        localConn.ConnectionString = toLocalDSN;
+                        localConn.Open();
+
+                        //CHECKING COUNT MDB REMOTE SERVER MACHINE
+                        fpCentralAdapter = new OleDbDataAdapter(" SELECT USERID ,Badgenumber ,Name ,DEFAULTDEPTID ,ATT ,INLATE ,OUTEARLY ,OVERTIME ,SEP " +
+                       "  , HOLIDAY, LUNCHDURATION, privilege, InheritDeptSch, InheritDeptSchClass, AutoSchPlan " +
+                       "  , MinAutoSchInterval, RegisterOT, InheritDeptRule, EMPRIVILEGE FROM USERINFO ", localConn);
+                        dsFpCentral = new DataSet();  //TEMPLATE -> table name in att2000.mdb
+                        fpCentralAdapter.Fill(dsFpCentral, "USERINFO");
+                        templateLocalCount = dsFpCentral.Tables[0].Rows.Count;
+                        localUserInfoCount = templateLocalCount;
+                        //END CHECKING COUNT MDB REMOTE SERVER MACHINE                      
+                    }
+
+
+                    if (templateRemoteCount > 0 && templateLocalCount > 0)
+                    {
+                        //LOAD DATA TO MODEL//
+
+                        List<RemoteUserInfoTempViewObject> listRemoteTemplateViewObjects = new List<RemoteUserInfoTempViewObject>();
+                        RemoteUserInfoTempViewObject remoteTemplateViewObject = new RemoteUserInfoTempViewObject();
+
+                        for (int i = 0; i < templateRemoteCount; i++)
+                        {
+                            remoteTemplateViewObject = new RemoteUserInfoTempViewObject();
+                            remoteTemplateViewObject.UserId = ds.Tables[0].Rows[i].ItemArray[0].ToString();
+                            remoteTemplateViewObject.badgeNumber = ds.Tables[0].Rows[i].ItemArray[1].ToString();
+
+                            listRemoteTemplateViewObjects.Add(remoteTemplateViewObject);
+                        }
+
+                        List<LocalUserInfoTempViewObject> listLocalTemplateViewObjects =
+                            new List<LocalUserInfoTempViewObject>();
+                        LocalUserInfoTempViewObject localTemplateViewObject = new LocalUserInfoTempViewObject();
+
+                        for (int i = 0; i < templateLocalCount; i++)
+                        {
+                            localTemplateViewObject = new LocalUserInfoTempViewObject();
+                            localTemplateViewObject.UserId = dsFpCentral.Tables[0].Rows[i].ItemArray[0].ToString();
+                            localTemplateViewObject.badgeNumber = dsFpCentral.Tables[0].Rows[i].ItemArray[1].ToString();
+
+                            listLocalTemplateViewObjects.Add(localTemplateViewObject);
+                        }
+
+                        //END LOAD DATA TO MODEL//
+
+                        List<NewUserInfoTempViewObject> listNewDataTemplateViewObjects = new List<NewUserInfoTempViewObject>();
+                        NewUserInfoTempViewObject newDataTemplateViewObjects = new NewUserInfoTempViewObject();
+
+                        foreach (var itemLocalTemplate in listLocalTemplateViewObjects.OrderBy(o => o.UserId))
+                        {
+                            var tempNewDataTemplate =
+                                listRemoteTemplateViewObjects.Where(w =>
+                                        w.UserId == itemLocalTemplate.UserId &&
+                                        w.badgeNumber == itemLocalTemplate.badgeNumber).ToList();
+                            if (tempNewDataTemplate == null || tempNewDataTemplate.Count == 0)
+                            {
+                                newDataTemplateViewObjects = new NewUserInfoTempViewObject();
+                                newDataTemplateViewObjects.UserId = itemLocalTemplate.UserId;
+                                newDataTemplateViewObjects.badgeNumber = itemLocalTemplate.badgeNumber;
+
+                                listNewDataTemplateViewObjects.Add(newDataTemplateViewObjects);
+                            }
+
+                        }
+
+                        //INJECT NEW TEMPLATE DATA INTO LOCAL TEMPLATE DATA
+
+                        if (listNewDataTemplateViewObjects.Count > 0 || listNewDataTemplateViewObjects != null)
+                        {
+                            try
+                            {
+                                bool injectDataMDB = InjectRemoteUserInfoData(listNewDataTemplateViewObjects);
+
+                                if (injectDataMDB)
+                                {
+                                    compare = true;
+                                }
+
+                            }
+                            catch (Exception ex)
+                            {
+                                compare = false;
+                            }
+                        }
+
+                        //END INJECT NEW TEMPLATE DATA INTO LOCAL TEMPLATE DATA
+                    }
+                    else if (templateLocalCount == 0 || templateRemoteCount == 0)
+                    {
+                        compare = false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                compare = false;
+            }
+
+            return compare;
+        }
+
         public bool CompareFPCENTRALToMDLocal()
         {
             bool compare = false;
@@ -201,7 +337,7 @@ namespace ENJ.FingerPrint.Core.Repository
 
             try
             {
-                using (OleDbConnection remoteCon = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\DEVELOPER-PC\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;"))
+                using (OleDbConnection remoteCon = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;"))
                 {
                     //remoteCon.ConnectionString = toRemoteDSN;
                     remoteCon.Open();
@@ -324,6 +460,99 @@ namespace ENJ.FingerPrint.Core.Repository
             return compare;
         }
 
+        private bool InjectRemoteUserInfoData(List<NewUserInfoTempViewObject> model)
+        {
+            bool result = false;
+
+            OleDbCommand cmd;
+            OleDbDataAdapter adapter;
+            OleDbDataAdapter fpCentralAdapter;
+            DataSet ds;
+            DataSet dsFpCentral;
+
+            if (model.Count > 0 || model != null)
+            {
+
+                if (localUserInfoCount > remoteUserInfoCount) // INSERT NEW DATA INTO LOCAL MDB ATT2000 Database
+                {
+
+                    foreach (var itemModel in model.OrderBy(o => o.UserId))
+                    {
+                        using (OleDbConnection insRemoteConn = new OleDbConnection())
+                        {
+
+                            OleDbConnection localConn = new OleDbConnection();
+                            localConn.ConnectionString = toLocalDSN;
+                            localConn.Open();
+                            fpCentralAdapter = new OleDbDataAdapter(" SELECT USERID ,Badgenumber ,Name ,DEFAULTDEPTID ,ATT ,INLATE ,OUTEARLY ,OVERTIME ,SEP " +
+                                " , HOLIDAY, LUNCHDURATION, privilege, InheritDeptSch, InheritDeptSchClass, AutoSchPlan " +
+                                " , MinAutoSchInterval, RegisterOT, InheritDeptRule, EMPRIVILEGE FROM USERINFO WHERE USERID = " + itemModel.UserId + " AND Badgenumber = '" + itemModel.badgeNumber + "'", localConn);
+                            dsFpCentral = new DataSet();
+                            fpCentralAdapter.Fill(dsFpCentral, "USERINFO");
+
+                            int localCheck = dsFpCentral.Tables[0].Rows.Count;
+
+                            if (localCheck > 0) // CHECKING DATA FOUND
+                            {
+                                try
+                                {
+
+                                    OleDbCommand cmdOleDb;
+                                    OleDbCommand cmdAtt2000;
+                                    OleDbDataAdapter da;
+                                    DataTable dt = new DataTable();
+
+                                    OleDbConnection conInsRemoteConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;");
+
+                                    conInsRemoteConn.Open();
+                                    cmdOleDb = new OleDbCommand("insert into USERINFO (USERID ,Badgenumber ,Name ,DEFAULTDEPTID ,ATT ,INLATE ,OUTEARLY ,OVERTIME ,SEP " +
+                                       " , HOLIDAY, LUNCHDURATION, privilege, InheritDeptSch, InheritDeptSchClass, AutoSchPlan " +
+                                       " , MinAutoSchInterval, RegisterOT, InheritDeptRule, EMPRIVILEGE)" +
+                                       " values (@USERID ,@Badgenumber ,@Name ,@DEFAULTDEPTID ,@ATT ,@INLATE ,@OUTEARLY ,@OVERTIME ,@SEP " +
+                                       " , @HOLIDAY, @LUNCHDURATION, @privilege, @InheritDeptSch, @InheritDeptSchClass, @AutoSchPlan " +
+                                       " , @MinAutoSchInterval, @RegisterOT, @InheritDeptRule, @EMPRIVILEGE) ", conInsRemoteConn);
+                                    cmdOleDb.Parameters.AddWithValue("@USERID", dsFpCentral.Tables[0].Rows[0]["USERID"]);
+                                    cmdOleDb.Parameters.AddWithValue("@Badgenumber", dsFpCentral.Tables[0].Rows[0]["Badgenumber"]);
+                                    cmdOleDb.Parameters.AddWithValue("@Name", dsFpCentral.Tables[0].Rows[0]["Name"]);
+                                    cmdOleDb.Parameters.AddWithValue("@DEFAULTDEPTID", dsFpCentral.Tables[0].Rows[0]["DEFAULTDEPTID"]);
+                                    cmdOleDb.Parameters.AddWithValue("@ATT", dsFpCentral.Tables[0].Rows[0]["ATT"]);
+                                    cmdOleDb.Parameters.AddWithValue("@INLATE", dsFpCentral.Tables[0].Rows[0]["INLATE"]);
+                                    cmdOleDb.Parameters.AddWithValue("@OUTEARLY", dsFpCentral.Tables[0].Rows[0]["OUTEARLY"]);
+                                    cmdOleDb.Parameters.AddWithValue("@OVERTIME", dsFpCentral.Tables[0].Rows[0]["OVERTIME"]);
+                                    cmdOleDb.Parameters.AddWithValue("@SEP", dsFpCentral.Tables[0].Rows[0]["SEP"]);
+                                    cmdOleDb.Parameters.AddWithValue("@HOLIDAY", dsFpCentral.Tables[0].Rows[0]["HOLIDAY"]);
+                                    cmdOleDb.Parameters.AddWithValue("@LUNCHDURATION", dsFpCentral.Tables[0].Rows[0]["LUNCHDURATION"]);
+                                    cmdOleDb.Parameters.AddWithValue("@privilege", dsFpCentral.Tables[0].Rows[0]["privilege"]);
+                                    cmdOleDb.Parameters.AddWithValue("@InheritDeptSch", dsFpCentral.Tables[0].Rows[0]["InheritDeptSch"]);
+                                    cmdOleDb.Parameters.AddWithValue("@InheritDeptSchClass", dsFpCentral.Tables[0].Rows[0]["InheritDeptSchClass"]);
+                                    cmdOleDb.Parameters.AddWithValue("@AutoSchPlan", dsFpCentral.Tables[0].Rows[0]["AutoSchPlan"]);
+                                    cmdOleDb.Parameters.AddWithValue("@MinAutoSchInterval", dsFpCentral.Tables[0].Rows[0]["MinAutoSchInterval"]);
+                                    cmdOleDb.Parameters.AddWithValue("@RegisterOT", dsFpCentral.Tables[0].Rows[0]["RegisterOT"]);
+                                    cmdOleDb.Parameters.AddWithValue("@InheritDeptRule", dsFpCentral.Tables[0].Rows[0]["InheritDeptRule"]);
+                                    cmdOleDb.Parameters.AddWithValue("@EMPRIVILEGE", dsFpCentral.Tables[0].Rows[0]["EMPRIVILEGE"]);
+
+                                    cmdOleDb.ExecuteNonQuery();
+                                    conInsRemoteConn.Close();
+
+                                    result = true;
+                                }
+                                catch (Exception ex)
+                                {
+                                    result = false;
+                                }
+                            }
+                        }
+
+                    }
+
+                }
+
+            }
+
+            return result;
+
+        }
+
         private bool InjectRemoteTemplateData(List<NewDataTemplateViewObject> model)
         {
             bool result = false;
@@ -364,7 +593,7 @@ namespace ENJ.FingerPrint.Core.Repository
                                     OleDbDataAdapter da;
                                     DataTable dt = new DataTable();
 
-                                    OleDbConnection conInsRemoteConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\DEVELOPER-PC\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;");
+                                    OleDbConnection conInsRemoteConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;");
 
                                     conInsRemoteConn.Open();
                                     cmdOleDb = new OleDbCommand("insert into TEMPLATE (USERID, FINGERID, TEMPLATE, USETYPE, Flag, DivisionFP, TEMPLATE4)" +
