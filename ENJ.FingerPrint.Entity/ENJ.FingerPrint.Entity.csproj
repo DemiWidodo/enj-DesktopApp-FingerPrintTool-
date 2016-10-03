@@ -45,6 +45,7 @@
     <Compile Include="ViewObject\FingerPrintEmployeeMapperViewObject.cs" />
     <Compile Include="ViewObject\LocalCheckInOutViewObject.cs" />
     <Compile Include="ViewObject\RemoteCheckInOutViewObject.cs" />
+    <Compile Include="ViewObject\UserInfoTemplateViewObject.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
