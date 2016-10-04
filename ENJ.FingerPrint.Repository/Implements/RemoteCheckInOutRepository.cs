@@ -31,5 +31,10 @@ namespace ENJ.FingerPrint.Repository.Implements
         {
             return remoteCheckInOutRepository.CompareFPCentralToUserInfoLocal();
         }
+
+        public bool InjectUserInfoToRemoteSQL()
+        {
+            return remoteCheckInOutRepository.InjectUserInfoToRemoteSQL();
+        }
     }
 }

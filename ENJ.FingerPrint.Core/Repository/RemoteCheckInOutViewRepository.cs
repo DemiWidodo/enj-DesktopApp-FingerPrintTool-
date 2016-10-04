@@ -15,7 +15,7 @@ namespace ENJ.FingerPrint.Core.Repository
     {
         private SqlConnection dbConn = new SqlConnection("Data Source=115.85.80.83; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
         private SqlConnection remoteDBConn = new SqlConnection("Data Source=115.85.80.83; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
-        private SqlConnection localDBConn = new SqlConnection("Data Source=ENJ-FP1\\SQLEXPRESS; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
+        private SqlConnection localDBConn = new SqlConnection("Data Source=ENJ-FP4\\SQLEXPRESS; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;");
         OleDbConnection remoteMDBConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\\\\115.85.80.83\\EntryPassDBOnline\\FPCENTRAL\\att2000.mdb;");
         OdbcConnection remoteDSN = new OdbcConnection("DSN=FPCENTRAl");
 
@@ -23,7 +23,9 @@ namespace ENJ.FingerPrint.Core.Repository
         private string toRemoteDSN = "DSN=FPCENTRAL";
         private int localCount = 0;
         private int localUserInfoCount = 0;
+        private int localSqlUserInfo = 0;
         private int remoteCount = 0;
+        private int remoteSqlUserInfo = 0;
         private int remoteUserInfoCount = 0;
 
         private LocalCheckInOutViewRepository localCheckInOutViewRepository = new LocalCheckInOutViewRepository();
@@ -146,7 +148,7 @@ namespace ENJ.FingerPrint.Core.Repository
                     remoteCheckInOut.StaffNo = strStaffNo.ToString();
                     remoteCheckInOut.TrDate = DateTime.Parse(dateCheckTime.ToString()).ToString("yyyy-MM-dd");
                     remoteCheckInOut.TrTime = DateTime.Parse(dateCheckTime.ToString()).ToString("HH:mm:ss");
-                    remoteCheckInOut.ServerIdentity = "JKT";
+                    remoteCheckInOut.ServerIdentity = "TMK";
 
                     InjectToRemoteTable(remoteCheckInOut);
 
@@ -627,6 +629,197 @@ namespace ENJ.FingerPrint.Core.Repository
             return result;
 
         }
+
+        public bool InjectUserInfoToRemoteSQL()
+        {
+            bool result = false;
+
+            try
+            {
+                OleDbCommand cmd;
+                OleDbDataAdapter dataAdapter;
+                SqlDataAdapter sqlUserInfo;
+                DataSet ds;
+                DataSet dsSqlUserInfo;
+
+                List<LocalCheckInOutViewObject> listLocalCheckInOut = new List<LocalCheckInOutViewObject>();
+                LocalCheckInOutViewObject localCheckInOut = new LocalCheckInOutViewObject();
+                using (OleDbConnection localCon =
+                    new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\\FSDB\\att2000.mdb;"))
+                {
+                    localCon.Open();
+
+                    //CHECKING COUNT MDB LOCAL SERVER MACHINE
+                    dataAdapter =
+                        new OleDbDataAdapter(
+                            " SELECT USERID ,Badgenumber ,Name ,DEFAULTDEPTID ,ATT ,INLATE ,OUTEARLY ,OVERTIME ,SEP " +
+                            " , HOLIDAY, LUNCHDURATION, privilege, InheritDeptSch, InheritDeptSchClass, AutoSchPlan " +
+                            " , MinAutoSchInterval, RegisterOT, InheritDeptRule, EMPRIVILEGE FROM USERINFO", localCon);
+                    ds = new DataSet(); //TEMPLATE -> table name in att2000.mdb
+                    dataAdapter.Fill(ds, "USERINFO");
+                    int templateLocalCount = ds.Tables[0].Rows.Count;
+                    localSqlUserInfo = templateLocalCount;
+                    //END CHECKING COUNT MDB LOCAL SERVER MACHINE
+
+                    using (
+                        SqlConnection localSqlConn =
+                            new SqlConnection("Data Source=115.85.80.83; Initial Catalog=att2000; User Id=gimsadmin; Password=EnjGA20120723;"))
+                    {
+                        localSqlConn.Open();
+                        sqlUserInfo = new SqlDataAdapter(" SELECT USERID ,Badgenumber FROM USERINFO ", localSqlConn);
+                        dsSqlUserInfo = new DataSet();
+                        sqlUserInfo.Fill(dsSqlUserInfo, "USERINFO");
+                        int templatelocalSqlUserInfo = dsSqlUserInfo.Tables[0].Rows.Count;
+                        remoteSqlUserInfo = templatelocalSqlUserInfo;
+                    }
+
+                    if (localSqlUserInfo > remoteSqlUserInfo)
+                    {
+                        if (remoteSqlUserInfo > 0 && localSqlUserInfo > 0)
+                        {
+                            //LOAD DATA TO MODEL//
+
+                            List<LocalUserInfoTempViewObject> listLocalTemplateViewObjects =
+                                new List<LocalUserInfoTempViewObject>();
+                            LocalUserInfoTempViewObject localTemplateViewObject = new LocalUserInfoTempViewObject();
+
+                            for (int i = 0; i < localSqlUserInfo; i++)
+                            {
+                                localTemplateViewObject = new LocalUserInfoTempViewObject();
+                                localTemplateViewObject.UserId = ds.Tables[0].Rows[i].ItemArray[0].ToString();
+                                localTemplateViewObject.badgeNumber = ds.Tables[0].Rows[i].ItemArray[1].ToString();
+
+                                listLocalTemplateViewObjects.Add(localTemplateViewObject);
+                            }
+
+                            List<RemoteUserInfoTempViewObject> listRemoteTemplateViewObjects =
+                                new List<RemoteUserInfoTempViewObject>();
+                            RemoteUserInfoTempViewObject remotelTemplateViewObject = new RemoteUserInfoTempViewObject();
+
+                            for (int i = 0; i < remoteSqlUserInfo; i++)
+                            {
+                                remotelTemplateViewObject = new RemoteUserInfoTempViewObject();
+                                remotelTemplateViewObject.UserId = dsSqlUserInfo.Tables[0].Rows[i].ItemArray[0].ToString();
+                                remotelTemplateViewObject.badgeNumber =
+                                    dsSqlUserInfo.Tables[0].Rows[i].ItemArray[1].ToString();
+
+                                listRemoteTemplateViewObjects.Add(remotelTemplateViewObject);
+                            }
+
+                            //END LOAD DATA TO MODEL//
+
+                            List<NewUserInfoTempViewObject> listNewDataTemplateViewObjects =
+                                new List<NewUserInfoTempViewObject>();
+                            NewUserInfoTempViewObject newDataTemplateViewObjects = new NewUserInfoTempViewObject();
+
+                            foreach (var itemLocalTemplate in listLocalTemplateViewObjects.OrderBy(o => o.UserId))
+                            {
+                                var tempNewDataTemplate =
+                                    listRemoteTemplateViewObjects.Where(w =>
+                                        w.UserId == itemLocalTemplate.UserId &&
+                                        w.badgeNumber == itemLocalTemplate.badgeNumber).ToList();
+                                if (tempNewDataTemplate == null || tempNewDataTemplate.Count == 0)
+                                {
+                                    newDataTemplateViewObjects = new NewUserInfoTempViewObject();
+                                    newDataTemplateViewObjects.UserId = itemLocalTemplate.UserId;
+                                    newDataTemplateViewObjects.badgeNumber = itemLocalTemplate.badgeNumber;
+
+                                    listNewDataTemplateViewObjects.Add(newDataTemplateViewObjects);
+                                }
+
+                            }
+
+                            //INJECT NEW TEMPLATE DATA INTO LOCAL TEMPLATE DATA
+
+                            if (listNewDataTemplateViewObjects.Count > 0 || listNewDataTemplateViewObjects != null)
+                            {
+                                LocalUserInfoTempViewObject localSQLInsert = new LocalUserInfoTempViewObject();
+
+                                try
+                                {
+                                    foreach (var listItem in listNewDataTemplateViewObjects.OrderBy(o => o.UserId))
+                                    {
+
+                                        dataAdapter =
+                                            new OleDbDataAdapter(
+                                                " SELECT USERID ,Badgenumber ,Name ,DEFAULTDEPTID ,ATT ,INLATE ,OUTEARLY ,OVERTIME ,SEP " +
+                                                " , HOLIDAY, LUNCHDURATION, privilege, InheritDeptSch, InheritDeptSchClass, AutoSchPlan " +
+                                                " , MinAutoSchInterval, RegisterOT, InheritDeptRule, EMPRIVILEGE FROM USERINFO WHERE USERID = " + listItem.UserId + " AND Badgenumber = '" + listItem.badgeNumber + "'", localCon);
+                                        ds = new DataSet(); //TEMPLATE -> table name in att2000.mdb
+                                        dataAdapter.Fill(ds, "USERINFO");
+                                        int checkUserInfoCount = ds.Tables[0].Rows.Count;
+
+                                        if (checkUserInfoCount > 0)
+                                        {
+                                            try
+                                            {
+                                                SqlCommand injectUserInfoCmd = new SqlCommand();
+                                                injectUserInfoCmd.CommandType = System.Data.CommandType.Text;
+                                                injectUserInfoCmd.CommandText = "INSERT INTO USERINFO (USERID ,Badgenumber ,Name ,DEFAULTDEPTID ,ATT ,INLATE ,OUTEARLY ,OVERTIME ,SEP " +
+                                               " , HOLIDAY, LUNCHDURATION, privilege, InheritDeptSch, InheritDeptSchClass, AutoSchPlan " +
+                                               " , MinAutoSchInterval, RegisterOT, InheritDeptRule, EMPRIVILEGE)" +
+                                               " VALUES (@USERID ,@Badgenumber ,@Name ,@DEFAULTDEPTID ,@ATT ,@INLATE ,@OUTEARLY ,@OVERTIME ,@SEP " +
+                                               " , @HOLIDAY, @LUNCHDURATION, @privilege, @InheritDeptSch, @InheritDeptSchClass, @AutoSchPlan " +
+                                               " , @MinAutoSchInterval, @RegisterOT, @InheritDeptRule, @EMPRIVILEGE) ";
+                                                injectUserInfoCmd.Connection = dbConn;
+
+                                                injectUserInfoCmd.Parameters.AddWithValue("@USERID", ds.Tables[0].Rows[0]["USERID"]);
+                                                injectUserInfoCmd.Parameters.AddWithValue("@Badgenumber", ds.Tables[0].Rows[0]["Badgenumber"]);
+                                                injectUserInfoCmd.Parameters.AddWithValue("@Name", ds.Tables[0].Rows[0]["Name"]);
+                                                injectUserInfoCmd.Parameters.AddWithValue("@DEFAULTDEPTID", ds.Tables[0].Rows[0]["DEFAULTDEPTID"]);
+                                                injectUserInfoCmd.Parameters.AddWithValue("@ATT", ds.Tables[0].Rows[0]["ATT"]);
+                                                injectUserInfoCmd.Parameters.AddWithValue("@INLATE", ds.Tables[0].Rows[0]["INLATE"]);
+                                                injectUserInfoCmd.Parameters.AddWithValue("@OUTEARLY", ds.Tables[0].Rows[0]["OUTEARLY"]);
+                                                injectUserInfoCmd.Parameters.AddWithValue("@OVERTIME", ds.Tables[0].Rows[0]["OVERTIME"]);
+                                                injectUserInfoCmd.Parameters.AddWithValue("@SEP", ds.Tables[0].Rows[0]["SEP"]);
+                                                injectUserInfoCmd.Parameters.AddWithValue("@HOLIDAY", ds.Tables[0].Rows[0]["HOLIDAY"]);
+                                                injectUserInfoCmd.Parameters.AddWithValue("@LUNCHDURATION", ds.Tables[0].Rows[0]["LUNCHDURATION"]);
+                                                injectUserInfoCmd.Parameters.AddWithValue("@privilege", ds.Tables[0].Rows[0]["privilege"]);
+                                                injectUserInfoCmd.Parameters.AddWithValue("@InheritDeptSch", ds.Tables[0].Rows[0]["InheritDeptSch"]);
+                                                injectUserInfoCmd.Parameters.AddWithValue("@InheritDeptSchClass", ds.Tables[0].Rows[0]["InheritDeptSchClass"]);
+                                                injectUserInfoCmd.Parameters.AddWithValue("@AutoSchPlan", ds.Tables[0].Rows[0]["AutoSchPlan"]);
+                                                injectUserInfoCmd.Parameters.AddWithValue("@MinAutoSchInterval", ds.Tables[0].Rows[0]["MinAutoSchInterval"]);
+                                                injectUserInfoCmd.Parameters.AddWithValue("@RegisterOT", ds.Tables[0].Rows[0]["RegisterOT"]);
+                                                injectUserInfoCmd.Parameters.AddWithValue("@InheritDeptRule", ds.Tables[0].Rows[0]["InheritDeptRule"]);
+                                                injectUserInfoCmd.Parameters.AddWithValue("@EMPRIVILEGE", ds.Tables[0].Rows[0]["EMPRIVILEGE"]);
+
+                                                dbConn.Open();
+                                                injectUserInfoCmd.ExecuteNonQuery();
+                                                dbConn.Close();
+                                                result = true;
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                result = false;
+                                            }
+                                        }
+
+                                        result = true;
+                                    }
+
+                                }
+                                catch (Exception ex)
+                                {
+                                    result = false;
+                                }
+                            }
+
+                            //END INJECT NEW TEMPLATE DATA INTO LOCAL TEMPLATE DATA
+                        }
+
+                    }
+
+                }
+            }
+            catch (Exception)
+            {
+                result = false;
+            }
+
+            return result;
+        }
+
+
 
         #region Function Collection Library
         private string GetCurrentMonth(string strMonth)

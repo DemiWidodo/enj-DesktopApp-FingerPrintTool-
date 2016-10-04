@@ -14,5 +14,6 @@ namespace ENJ.FingerPrint.Repository.Interfaces
         bool ProceedInjectFingerPrintData();
         bool CompareFPCENTRALToMDLocal();
         bool CompareFPCentralToUserInfoLocal();
+        bool InjectUserInfoToRemoteSQL();
     }
 }
